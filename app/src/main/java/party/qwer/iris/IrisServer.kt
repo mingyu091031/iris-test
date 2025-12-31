@@ -193,6 +193,14 @@ class IrisServer(
                         ReplyType.IMAGE_MULTIPLE -> Replier.sendMultiplePhotos(
                             roomId,
                             replyRequest.data.jsonArray.map { it.jsonPrimitive.content })
+
+                        ReplyType.AUDIO -> Replier.sendAudio(
+                            roomId, replyRequest.data.jsonPrimitive.content
+                        )
+
+                        ReplyType.AUDIO_MULTIPLE -> Replier.sendMultipleAudios(
+                            roomId,
+                            replyRequest.data.jsonArray.map { it.jsonPrimitive.content })
                         
                         ReplyType.VIDEO -> {
                             throw Exception("Use /upload endpoint for video files")

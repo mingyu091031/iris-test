@@ -164,7 +164,70 @@ class Replier {
             }
         }
 
-        // 새로 추가: multipart 업로드로 받은 파일들 전송
+        // 새로 추가: 음성 전송 (단일)
+        fun sendAudio(room: Long, base64AudioDataString: String) {
+            coroutineScope.launch {
+                messageChannel.send(SendMessageRequest {
+                    sendMultipleAudiosInternal(room, listOf(base64AudioDataString))
+                })
+            }
+        }
+
+        // 새로 추가: 음성 전송 (멀티플)
+        fun sendMultipleAudios(room: Long, base64AudioDataStrings: List<String>) {
+            coroutineScope.launch {
+                messageChannel.send(SendMessageRequest {
+                    sendMultipleAudiosInternal(room, base64AudioDataStrings)
+                })
+            }
+        }
+
+        private fun sendMultipleAudiosInternal(room: Long, base64AudioDataStrings: List<String>) {
+            val audioDir = File(IMAGE_DIR_PATH).apply {
+                if (!exists()) {
+                    mkdirs()
+                }
+            }
+
+            val uris = base64AudioDataStrings.mapIndexed { idx, base64AudioDataString ->
+                val decodedAudio = Base64.decode(base64AudioDataString, Base64.DEFAULT)
+                val timestamp = System.currentTimeMillis().toString()
+
+                // 음성 파일은 mp3로 저장 (기본값)
+                val audioFile = File(audioDir, "${timestamp}_${idx}.mp3").apply {
+                    writeBytes(decodedAudio)
+                }
+
+                val audioUri = Uri.fromFile(audioFile)
+                mediaScan(audioUri)
+                audioUri
+            }
+
+            if (uris.isEmpty()) {
+                System.err.println("No audio URIs created, cannot send multiple audios.")
+                return
+            }
+
+            // 음성 메시지로 전송하려면 audio/* MIME 타입 사용
+            val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                setPackage("com.kakao.talk")
+                type = "audio/*"  // 음성 메시지용 MIME 타입
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+                putExtra("key_id", room)
+                putExtra("key_type", 1)
+                putExtra("key_from_direct_share", true)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+
+            try {
+                AndroidHiddenApi.startActivity(intent)
+            } catch (e: Exception) {
+                System.err.println("Error starting activity for sending multiple audios: $e")
+                throw e
+            }
+        }
+
+        // multipart 업로드로 받은 파일들 전송
         fun sendMedia(room: Long, filePaths: List<String>) {
             coroutineScope.launch {
                 messageChannel.send(SendMessageRequest {
@@ -240,6 +303,16 @@ class Replier {
                 "mov" -> "video/quicktime"
                 "flv" -> "video/x-flv"
                 "ogv" -> "video/ogg"
+                // 음성
+                "mp3" -> "audio/mpeg"
+                "wav" -> "audio/wav"
+                "flac" -> "audio/flac"
+                "tta" -> "audio/x-tta"
+                "tak" -> "audio/x-tak"
+                "aac" -> "audio/aac"
+                "wma" -> "audio/x-ms-wma"
+                "ogg" -> "audio/ogg"
+                "m4a" -> "audio/mp4"
                 else -> "*/*"
             }
         }
