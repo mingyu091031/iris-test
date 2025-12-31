@@ -240,7 +240,16 @@ class Replier {
                 "mov" -> "video/quicktime"
                 "flv" -> "video/x-flv"
                 "ogv" -> "video/ogg"
-                else -> "image/*"  // 기본값
+                // 오디오
+                "mp3" -> "audio/mpeg"
+                "wav" -> "audio/wav"
+                "tta" -> "audio/x-tta"
+                "tak" -> "audio/x-tak"
+                "aac" -> "audio/aac"
+                "wma" -> "audio/x-ms-wma"
+                "ogg" -> "audio/ogg"
+                "m4a" -> "audio/mp4"
+                else -> "*/*"
             }
         }
 
