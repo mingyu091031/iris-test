@@ -208,10 +208,10 @@ class Replier {
                 return
             }
 
-            // 음성 메시지로 전송하려면 audio/* MIME 타입 사용
+            // 음성 메시지로 전송하려면 "*/*" MIME 타입 사용
             val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
                 setPackage("com.kakao.talk")
-                type = "audio/*"  // 음성 메시지용 MIME 타입
+                type = "*/*"  // 음성 메시지용 MIME 타입
                 putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
                 putExtra("key_id", room)
                 putExtra("key_type", 1)
